@@ -7,15 +7,15 @@ This code is implemented based on [Soft DTW for PyTorch in CUDA](https://github.
 You can also run the included profiler/test (tested with Python v3.6), and see the speedups you'd get:
 
 ```
-git clone https://github.com/Maghoumi/pytorch-softdtw-cuda
-cd pytorch-softdtw-cuda
-python soft_dtw_cuda.pypython soft_dtw_cuda.py
+git clone https://github.com/wangzehui20/OTAM-Video-via-Temporal-Alignment
+cd OTAM-Video-via-Temporal-Alignment
+python softerdtw_padquery_update2_right.py
 ```
 
 A sample code is already provided in the script. Here's a quick example:
 
 ```
-from soft_dtw_cuda import SoftDTW
+from softerdtw_padquery_update2_right import SoftDTW
 
 # Create the sequences
 batch_size, len_x, len_y, dims = 8, 15, 12, 5
