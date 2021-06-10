@@ -22,6 +22,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import math
+
 import numpy as np
 import torch
 import torch.cuda
@@ -53,6 +54,7 @@ import pickle
 #     d = D[b, i - 1, j - 1] + softmin
 
 #     return d
+
 
 @cuda.jit
 def compute_softdtw_cuda(D, gamma, bandwidth, max_i, max_j, n_passes, R, P):
@@ -109,10 +111,6 @@ def compute_softdtw_cuda(D, gamma, bandwidth, max_i, max_j, n_passes, R, P):
         if I + J == p and (I < max_i and J < max_j):
             # Don't compute if outside bandwidth
             if not (abs(i - j) > bandwidth > 0):
-                # if i == 1 or i == max_i:
-                #     R[b, i, j] = cal_R_edge_cuda(R, D, b, i, j, gamma, inv_gamma)
-                # else:
-                #     R[b, i, j] = cal_R_body_cuda(R, D, b, i, j, gamma, inv_gamma)
 
                 R[b, i, j] = cal_R_edge_cuda(R, D, b, i, j, gamma, inv_gamma)
                 # Record
@@ -126,7 +124,6 @@ def compute_softdtw_cuda(D, gamma, bandwidth, max_i, max_j, n_passes, R, P):
                 elif minimum == R[b, i-1, j-1]:
                     P[b, i ,j, 0] = i - 1
                     P[b, i ,j, 1] = j - 1
-                
 
         # Wait for other threads in this block
         cuda.syncthreads()
@@ -302,11 +299,6 @@ def compute_softdtw(D, gamma, bandwidth):
                 # Check the pruning condition
                 if 0 < bandwidth < np.abs(i - j):
                     continue
-
-                # if i == 1 or i == N:
-                #     R[b, i, j] = cal_R_edge(R, D, b, i, j, gamma)
-                # else:
-                #     R[b, i, j] = cal_R_body(R, D, b, i, j, gamma)
 
                 R[b, i, j] = cal_R_edge(R, D, b, i, j, gamma)
     return R
