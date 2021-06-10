@@ -116,8 +116,6 @@ def compute_softdtw_cuda(D, gamma, bandwidth, max_i, max_j, n_passes, R):
                 else:
                     R[b, i, j] = cal_R_body_cuda(R, D, b, i, j, gamma, inv_gamma)
 
-                # R[b, i, j] = cal_R_edge_cuda(R, D, b, i, j, gamma, inv_gamma)
-
         # Wait for other threads in this block
         cuda.syncthreads()
 
@@ -150,11 +148,15 @@ def compute_softdtw_backward_cuda(D, R, inv_gamma, bandwidth, max_i, max_j, n_pa
 
             # Don't compute if outside bandwidth
             if not (abs(i - j) > bandwidth > 0):
-                a = math.exp((R[k, i + 1, j] - R[k, i, j] - D[k, i + 1, j]) * inv_gamma)
-                b = math.exp((R[k, i, j + 1] - R[k, i, j] - D[k, i, j + 1]) * inv_gamma)
-                c = math.exp((R[k, i + 1, j + 1] - R[k, i, j] - D[k, i + 1, j + 1]) * inv_gamma)
-                E[k, i, j] = E[k, i + 1, j] * a + E[k, i, j + 1] * b + E[k, i + 1, j + 1] * c
-
+                if j == 1 or j == max_j:
+                    a = math.exp((R[k, i + 1, j] - R[k, i, j] - D[k, i + 1, j]) * inv_gamma)
+                    b = math.exp((R[k, i, j + 1] - R[k, i, j] - D[k, i, j + 1]) * inv_gamma)
+                    c = math.exp((R[k, i + 1, j + 1] - R[k, i, j] - D[k, i + 1, j + 1]) * inv_gamma)
+                    E[k, i, j] = E[k, i + 1, j] * a + E[k, i, j + 1] * b + E[k, i + 1, j + 1] * c
+                else:
+                    a = math.exp((R[k, i, j + 1] - R[k, i, j] - D[k, i, j + 1]) * inv_gamma)
+                    b = math.exp((R[k, i + 1, j + 1] - R[k, i, j] - D[k, i + 1, j + 1]) * inv_gamma)
+                    E[k, i, j] = E[k, i, j + 1] * a + E[k, i + 1, j + 1] * b
         # Wait for other threads in this block
         cuda.syncthreads()
 
@@ -276,12 +278,11 @@ def compute_softdtw(D, gamma, bandwidth):
                 if 0 < bandwidth < np.abs(i - j):
                     continue
 
-                # if i == 1 or i == N:
-                #     R[b, i, j] = cal_R_edge(R, D, b, i, j, gamma)
-                # else:
-                #     R[b, i, j] = cal_R_body(R, D, b, i, j, gamma)
+                if j == 1 or j == M:
+                    R[b, i, j] = cal_R_edge(R, D, b, i, j, gamma)
+                else:
+                    R[b, i, j] = cal_R_body(R, D, b, i, j, gamma)
 
-                R[b, i, j] = cal_R_edge(R, D, b, i, j, gamma)
     return R
 
 
@@ -308,14 +309,20 @@ def compute_softdtw_backward(D_, R, gamma, bandwidth):
                 # Check the pruning condition
                 if 0 < bandwidth < np.abs(i - j):
                     continue
-
-                a0 = (R[k, i + 1, j] - R[k, i, j] - D[k, i + 1, j]) / gamma
-                b0 = (R[k, i, j + 1] - R[k, i, j] - D[k, i, j + 1]) / gamma
-                c0 = (R[k, i + 1, j + 1] - R[k, i, j] - D[k, i + 1, j + 1]) / gamma
-                a = np.exp(a0)
-                b = np.exp(b0)
-                c = np.exp(c0)
-                E[k, i, j] = E[k, i + 1, j] * a + E[k, i, j + 1] * b + E[k, i + 1, j + 1] * c
+                if j == M or j == 1:
+                    a0 = (R[k, i + 1, j] - R[k, i, j] - D[k, i + 1, j]) / gamma
+                    b0 = (R[k, i, j + 1] - R[k, i, j] - D[k, i, j + 1]) / gamma
+                    c0 = (R[k, i + 1, j + 1] - R[k, i, j] - D[k, i + 1, j + 1]) / gamma
+                    a = np.exp(a0)
+                    b = np.exp(b0)
+                    c = np.exp(c0)
+                    E[k, i, j] = E[k, i + 1, j] * a + E[k, i, j + 1] * b + E[k, i + 1, j + 1] * c
+                else: 
+                    a0 = (R[k, i, j + 1] - R[k, i, j] - D[k, i, j + 1]) / gamma
+                    b0 = (R[k, i + 1, j + 1] - R[k, i, j] - D[k, i + 1, j + 1]) / gamma
+                    a = np.exp(a0)
+                    b = np.exp(b0)
+                    E[k, i, j] = E[k, i, j + 1] * a + E[k, i + 1, j + 1] * b
     return E[:, 1 : N + 1, 1 : M + 1]
 
 
