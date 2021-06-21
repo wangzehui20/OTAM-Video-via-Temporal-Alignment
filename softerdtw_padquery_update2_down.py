@@ -22,38 +22,12 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import math
-
 import numpy as np
 import torch
 import torch.cuda
 from numba import cuda, jit
 from torch.autograd import Function
 from torch.nn.functional import pad
-
-# ----------------------------------------------------------------------------------------------------------------------
-# @cuda.jit
-# def cal_R_edge_cuda(R, D, b, i, j, gamma, inv_gamma):
-#     r0 = -R[b, i - 1, j - 1] * inv_gamma
-#     r1 = -R[b, i - 1, j] * inv_gamma
-#     r2 = -R[b, i, j - 1] * inv_gamma
-#     rmax = max(max(r0, r1), r2)
-#     rsum = math.exp(r0 - rmax) + math.exp(r1 - rmax) + math.exp(r2 - rmax)
-#     softmin = -gamma * (math.log(rsum) + rmax)
-#     d = D[b, i - 1, j - 1] + softmin
-
-#     return d
-
-
-# @cuda.jit
-# def cal_R_body_cuda(R, D, b, i, j, gamma, inv_gamma):
-#     r0 = -R[b, i - 1, j - 1] * inv_gamma
-#     r1 = -R[b, i, j - 1] * inv_gamma
-#     rmax = max(r0, r1)
-#     rsum = math.exp(r0 - rmax) + math.exp(r1 - rmax)
-#     softmin = -gamma * (math.log(rsum) + rmax)
-#     d = D[b, i - 1, j - 1] + softmin
-
-#     return d
 
 
 @cuda.jit
@@ -533,7 +507,6 @@ def profile(batch_size, seq_len_a, seq_len_b, dims, tol_backward):
 # ----------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
     # from timeit import default_timer as timer
-
     torch.manual_seed(1234)
 
     profile(128, 17, 15, 2, tol_backward=1e-6)
